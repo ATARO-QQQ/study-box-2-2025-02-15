@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reflecting Dots</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    .board {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      border: 2px solid black;
+      display: grid;
+      grid-template-columns: repeat(200, 1fr);
+      grid-template-rows: repeat(200, 1fr);
+    }
+    .cell {
+      border: 0.25px solid #ddd;
+      box-sizing: border-box;
+    }
+    .dot {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background-color: black;
+      border-radius: 50%;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div>
+  <div class="board" id="board"></div>
+  <button onclick="start()">Start</button>
+  <button onclick="stop()">Stop</button>
+  <button onclick="reset()">Reset</button>
+</div>
+
+<script>
+  const boardSize = 500;
+  const gridSize = 200;
+  const dotCount = 30;
+  const dots = [];
+  let interval;
+
+  function createBoard() {
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+    for (let i = 0; i < gridSize; i++) {
+      for (let j = 0; j < gridSize; j++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        board.appendChild(cell);
+      }
+    }
+  }
+
+  function createDots() {
+    let remainingDots = dotCount;
+    while (remainingDots > 0) {
+      const groupSize = Math.min(remainingDots, Math.floor(Math.random() * 6) + 5);
+      const baseX = Math.random() * (boardSize - 50);
+      const baseY = Math.random() * (boardSize - 50);
+      for (let i = 0; i < groupSize; i++) {
+        createDot(baseX + Math.random() * 20, baseY + Math.random() * 20);
+      }
+      remainingDots -= groupSize;
+    }
+  }
+
+  function createDot(x, y) {
+    const dot = document.createElement('div');
+    dot.classList.add('dot');
+    dot.style.left = `${x}px`;
+    dot.style.top = `${y}px`;
+    dot.dx = Math.random() * 10 + 5;
+    dot.dy = Math.random() * 10 + 5;
+    dots.push(dot);
+    document.getElementById('board').appendChild(dot);
+  }
+
+  function moveDots() {
+    dots.forEach(dot => {
+      const rect = dot.getBoundingClientRect();
+      const boardRect = document.getElementById('board').getBoundingClientRect();
+
+      let newX = rect.left - boardRect.left + dot.dx;
+      let newY = rect.top - boardRect.top + dot.dy;
+
+      if (newX <= 0 || newX >= boardSize - 3) dot.dx *= -1;
+      if (newY <= 0 || newY >= boardSize - 3) dot.dy *= -1;
+
+      dot.style.left = `${Math.max(0, Math.min(newX, boardSize - 3))}px`;
+      dot.style.top = `${Math.max(0, Math.min(newY, boardSize - 3))}px`;
+    });
+  }
+
+  function start() {
+    createDots();
+    interval = setInterval(moveDots, 50);
+  }
+
+  function stop() {
+    clearInterval(interval);
+  }
+
+  function reset() {
+    clearInterval(interval);
+    document.getElementById('board').innerHTML = '';
+    dots.length = 0;
+    createBoard();
+  }
+
+  createBoard();
+</script>
+
+</body>
+</html>
