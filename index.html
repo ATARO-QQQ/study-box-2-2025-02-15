@@ -23,7 +23,7 @@
       grid-template-rows: repeat(200, 1fr);
     }
     .cell {
-      border: 0.25px solid #ddd;
+      border: 0.5px solid #ddd;
       box-sizing: border-box;
     }
     .dot {
@@ -53,7 +53,7 @@
 <script>
   const boardSize = 500;
   const gridSize = 200;
-  const dotCount = 30;
+  const dotCount = 50;
   const dots = [];
   let interval;
 
@@ -69,28 +69,21 @@
     }
   }
 
-  function createDots() {
-    let remainingDots = dotCount;
-    while (remainingDots > 0) {
-      const groupSize = Math.min(remainingDots, Math.floor(Math.random() * 6) + 5);
-      const baseX = Math.random() * (boardSize - 50);
-      const baseY = Math.random() * (boardSize - 50);
-      for (let i = 0; i < groupSize; i++) {
-        createDot(baseX + Math.random() * 20, baseY + Math.random() * 20);
-      }
-      remainingDots -= groupSize;
-    }
-  }
+  function createDotsCluster() {
+    const clusterSize = Math.floor(Math.random() * 3) + 5; // ランダムで5〜7個の玉を出す
+    const startX = Math.floor(Math.random() * (gridSize - clusterSize));
+    const startY = Math.floor(Math.random() * (gridSize - clusterSize));
 
-  function createDot(x, y) {
-    const dot = document.createElement('div');
-    dot.classList.add('dot');
-    dot.style.left = `${x}px`;
-    dot.style.top = `${y}px`;
-    dot.dx = Math.random() * 10 + 5;
-    dot.dy = Math.random() * 10 + 5;
-    dots.push(dot);
-    document.getElementById('board').appendChild(dot);
+    for (let i = 0; i < clusterSize; i++) {
+      const dot = document.createElement('div');
+      dot.classList.add('dot');
+      dot.style.left = `${(startX + i % 3) * (boardSize / gridSize)}px`;
+      dot.style.top = `${(startY + Math.floor(i / 3)) * (boardSize / gridSize)}px`;
+      dot.dx = Math.random() * 5 + 2; // 速度範囲を小さく設定
+      dot.dy = Math.random() * 5 + 2;
+      dots.push(dot);
+      document.getElementById('board').appendChild(dot);
+    }
   }
 
   function moveDots() {
@@ -101,8 +94,23 @@
       let newX = rect.left - boardRect.left + dot.dx;
       let newY = rect.top - boardRect.top + dot.dy;
 
+      // Prevent dots from moving outside the board
       if (newX <= 0 || newX >= boardSize - 3) dot.dx *= -1;
       if (newY <= 0 || newY >= boardSize - 3) dot.dy *= -1;
+
+      // Handle dot collisions
+      dots.forEach(otherDot => {
+        if (otherDot !== dot) {
+          const otherRect = otherDot.getBoundingClientRect();
+          if (
+            Math.abs(newX - (otherRect.left - boardRect.left)) < 3 &&
+            Math.abs(newY - (otherRect.top - boardRect.top)) < 3
+          ) {
+            dot.dx *= -1;
+            dot.dy *= -1;
+          }
+        }
+      });
 
       dot.style.left = `${Math.max(0, Math.min(newX, boardSize - 3))}px`;
       dot.style.top = `${Math.max(0, Math.min(newY, boardSize - 3))}px`;
@@ -110,7 +118,9 @@
   }
 
   function start() {
-    createDots();
+    for (let i = 0; i < dotCount / 7; i++) {
+      createDotsCluster();
+    }
     interval = setInterval(moveDots, 50);
   }
 
